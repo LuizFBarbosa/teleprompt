@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
     <title>Teleprompt+ | Estúdio de Voz</title>
-    <!-- Manifest para PWA light (atalho na tela inicial) -->
     <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Teleprompt+%22,%22short_name%22:%22Teleprompt%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22theme_color%22:%221A2F4F%22,%22background_color%22:%22F9F9FB%22}">
-    <!-- LameJS para MP3 via CDN -->
     <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.all.min.js"></script>
     <style>
         * {
@@ -26,7 +24,6 @@
             align-items: center;
         }
 
-        /* container principal */
         .app-container {
             max-width: 1400px;
             width: 100%;
@@ -35,10 +32,8 @@
             border-radius: 2rem;
             box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15);
             overflow: hidden;
-            transition: all 0.2s;
         }
 
-        /* header */
         .app-header {
             background: #1A2F4F;
             color: white;
@@ -48,7 +43,6 @@
         .app-header h1 {
             font-size: 1.6rem;
             font-weight: 600;
-            letter-spacing: -0.3px;
         }
         .app-header p {
             font-size: 0.85rem;
@@ -56,7 +50,6 @@
             margin-top: 0.25rem;
         }
 
-        /* layout dois painéis: mobile empilha, desktop lado a lado */
         .dashboard {
             display: flex;
             flex-direction: column;
@@ -64,7 +57,6 @@
             padding: 1.5rem;
         }
 
-        /* painel esquerdo: editor e controles */
         .editor-panel {
             background: #FFFFFF;
             border-radius: 1.5rem;
@@ -73,7 +65,6 @@
             border: 1px solid #E2E8F0;
         }
 
-        /* painel direito: teleprompter */
         .tele-panel {
             background: #0B1E2E;
             border-radius: 1.5rem;
@@ -96,7 +87,6 @@
             }
         }
 
-        /* textarea */
         .script-area {
             width: 100%;
             padding: 1rem;
@@ -108,7 +98,6 @@
             background: #FAFCFE;
             resize: vertical;
             min-height: 180px;
-            transition: 0.1s;
         }
         .script-area:focus {
             outline: none;
@@ -116,12 +105,11 @@
             box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
         }
 
-        /* grupo de botões flex */
         .btn-group {
             display: flex;
             flex-wrap: wrap;
             gap: 0.75rem;
-            margin: 1rem 0 1rem 0;
+            margin: 1rem 0;
             align-items: center;
         }
         button {
@@ -137,23 +125,19 @@
             align-items: center;
             gap: 0.4rem;
             color: #1E293B;
-            border: 1px solid transparent;
         }
         button:active { transform: scale(0.97); }
         button.primary {
             background: #2563EB;
             color: white;
-            box-shadow: 0 2px 6px rgba(37,99,235,0.2);
         }
         button.primary:hover { background: #1D4ED8; }
         button.warning {
             background: #DC2626;
             color: white;
         }
-        button.warning:hover { background: #B91C1C; }
         button:disabled {
             opacity: 0.5;
-            transform: none;
             cursor: not-allowed;
         }
         .speed-control {
@@ -170,14 +154,18 @@
             font-size: 0.85rem;
         }
         input[type="range"] {
-            width: 160px;
+            width: 200px;
         }
         .speed-value {
-            min-width: 45px;
+            min-width: 70px;
             font-weight: bold;
+            background: #1A2F4F;
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            text-align: center;
         }
 
-        /* teleprompter container com scroll automático */
         .teleprompter-view {
             background: #082032;
             border-radius: 1rem;
@@ -205,7 +193,6 @@
             line-height: 1.5;
             transition: all 0.2s;
             border-left: 4px solid transparent;
-            font-weight: 450;
         }
         .para-line.current {
             background: #2C4F6E;
@@ -215,7 +202,6 @@
             font-weight: 500;
             transform: scale(1.01);
         }
-        /* mixer / visualizador de áudio */
         .audio-mixer {
             margin-top: 1rem;
             background: #E9EEF4;
@@ -258,6 +244,14 @@
             margin: 0.8rem 0;
             border-color: #E2E8F0;
         }
+        .info-box {
+            background: #EFF6FF;
+            border-left: 4px solid #3B82F6;
+            padding: 0.5rem 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
@@ -267,23 +261,30 @@
         <p>Escreva ou cole seu roteiro | Role com destaque na linha atual | Grave sua voz em MP3</p>
     </div>
     <div class="dashboard">
-        <!-- Painel esquerdo: editor e controles de gravação -->
         <div class="editor-panel">
             <label for="scriptInput" style="font-weight:600;">📝 Seu roteiro (parágrafos com duas quebras de linha)</label>
-            <textarea id="scriptInput" class="script-area" placeholder="Cole seu texto aqui.&#10;&#10;Cada parágrafo separado por duas quebras de linha será uma linha independente no teleprompter.&#10;&#10;Exemplo:&#10;Bem-vindo ao Teleprompt profissional.&#10;&#10;Hoje vamos aprender sobre gravação e rolagem automática."></textarea>
+            <textarea id="scriptInput" class="script-area" placeholder="Cole seu texto aqui...&#10;&#10;Use duas quebras de linha entre cada parágrafo."></textarea>
             
             <div class="btn-group">
                 <button id="updateScriptBtn" class="primary">⟳ Atualizar Teleprompter</button>
                 <div class="speed-control">
-                    <label>⏩ Velocidade:</label>
-                    <input type="range" id="speedSlider" min="0.5" max="5" step="0.1" value="2.2">
-                    <span id="speedVal" class="speed-value">2.2</span>
+                    <label>⏱️ Tempo por parágrafo:</label>
+                    <input type="range" id="speedSlider" min="1" max="15" step="0.5" value="5">
+                    <span id="speedVal" class="speed-value">5.0 seg</span>
                 </div>
+            </div>
+
+            <div class="info-box">
+                💡 <strong>Dica de velocidade:</strong><br>
+                • 3-4 seg → Leitura rápida<br>
+                • 5-7 seg → Leitura confortável (recomendado)<br>
+                • 8-12 seg → Leitura pausada/reflexiva<br>
+                • O tempo é POR PARÁGRAFO, independente do tamanho
             </div>
 
             <div class="btn-group">
                 <button id="startScrollBtn" class="primary">▶ Iniciar Rolagem</button>
-                <button id="pauseScrollBtn" >⏸️ Parar Rolagem</button>
+                <button id="pauseScrollBtn">⏸️ Parar Rolagem</button>
             </div>
             <hr>
             <div class="btn-group">
@@ -291,7 +292,6 @@
                 <button id="stopRecordBtn" disabled>⏹️ Parar Gravação</button>
                 <button id="downloadMp3Btn" disabled>⬇️ Baixar MP3</button>
             </div>
-            <!-- Visualizador de ondas (mixer) -->
             <div class="audio-mixer">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
                     <span>🎧 Monitor de áudio</span>
@@ -300,29 +300,24 @@
                 <canvas id="waveCanvas" class="wave-canvas" width="400" height="70" style="width:100%; height:70px;"></canvas>
             </div>
             <div class="footer-info">
-                <span>💡 Dica: a linha central (destaque) é atualizada automaticamente durante a rolagem.</span>
-                <span>📱 Compatível com PWA light</span>
+                <span>📱 Compatível com PWA light | Clique em "Atualizar" após colar o texto</span>
             </div>
         </div>
 
-        <!-- Painel direito: Teleprompter -->
         <div class="tele-panel">
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                 <span style="color:#CBD5E1;">📜 Teleprompter</span>
                 <span id="scrollStateBadge" style="background:#2D3E50; padding:2px 12px; border-radius:20px; font-size:0.7rem;">⏸️ Pausado</span>
             </div>
             <div id="teleprompterContainer" class="teleprompter-view">
-                <div id="teleLinesContainer" class="tele-text">
-                    <!-- linhas geradas dinamicamente -->
-                    <div class="para-line">👈 Cole um texto e clique em "Atualizar Teleprompter"</div>
-                </div>
+                <div id="teleLinesContainer" class="tele-text"></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // ---------- DOM ----------
+    // DOM Elements
     const scriptInput = document.getElementById('scriptInput');
     const updateBtn = document.getElementById('updateScriptBtn');
     const startScrollBtn = document.getElementById('startScrollBtn');
@@ -339,17 +334,16 @@
     const waveCanvas = document.getElementById('waveCanvas');
     const canvasCtx = waveCanvas.getContext('2d');
 
-    // Variáveis globais
-    let currentLines = [];          // array de strings (parágrafos)
+    // Variáveis
+    let currentLines = [];
     let isScrolling = false;
-    let scrollInterval = null;
-    let currentLineIndex = 0;       // índice da linha atual que está no centro
-    let lastHighlightedIndex = -1;
-    let animationFrameId = null;     // para observer de rolagem suave
-    let currentSpeed = 2.2;          // pixels por segundo (referência para scrollTop incremental)
-    let scrollAnimationActive = false;
-
-    // Áudio globals
+    let currentLineIndex = 0;
+    let animationFrameId = null;
+    let lastTimestamp = 0;
+    let secondsPerParagraph = 5;  // ← NOVO: tempo em segundos por parágrafo!
+    let timeAccumulator = 0;
+    
+    // Áudio
     let mediaStream = null;
     let mediaRecorder = null;
     let audioChunks = [];
@@ -358,19 +352,17 @@
     let sourceNode = null;
     let analyserNode = null;
     let animationId = null;
-    let recordedBlob = null;          // webm blob original
-    let mp3BlobReady = null;          // após conversão
+    let mp3BlobReady = null;
 
-    // -------------------- Helper: quebrar texto em linhas (parágrafos por \n\n) ----------
+    // Quebra texto em parágrafos
     function parseTextToLines(rawText) {
-        // separa por dois ou mais \n\n e remove linhas vazias no final
         let paragraphs = rawText.split(/\n\s*\n/);
         paragraphs = paragraphs.filter(p => p.trim().length > 0);
         if (paragraphs.length === 0) return ["✨ Adicione texto acima ✨"];
         return paragraphs.map(p => p.trim());
     }
 
-    // Renderizar linhas no container do teleprompter
+    // Renderizar linhas
     function renderLines(lines) {
         linesContainer.innerHTML = '';
         if (!lines.length) {
@@ -383,19 +375,17 @@
         lines.forEach((line, idx) => {
             const div = document.createElement('div');
             div.className = 'para-line';
-            if (idx === currentLineIndex) div.classList.add('current');
             div.innerText = line;
             div.setAttribute('data-idx', idx);
             linesContainer.appendChild(div);
         });
-        // após renderizar, reposicionar scroll na linha atual (se existir)
-        if (lines.length > 0 && currentLineIndex >= 0 && currentLineIndex < lines.length) {
-            scrollToLine(currentLineIndex);
-        } else {
-            currentLineIndex = 0;
-            if(lines.length) scrollToLine(0);
-        }
+        
+        // Reset
+        teleContainer.scrollTop = 0;
+        currentLineIndex = 0;
+        timeAccumulator = 0;
         updateHighlight();
+        scrollToLine(0);
     }
 
     // Scroll suave para uma linha específica (centralizar)
@@ -410,30 +400,7 @@
         }
     }
 
-    // Atualizar visual da linha atual (highlight) baseado no centro da viewport do teleprompter
-    function updateHighlightFromScroll() {
-        if (!linesContainer.children.length) return;
-        const containerRect = teleContainer.getBoundingClientRect();
-        const centerY = containerRect.top + containerRect.height / 2;
-        let closestIdx = 0;
-        let minDist = Infinity;
-        for (let i = 0; i < linesContainer.children.length; i++) {
-            const child = linesContainer.children[i];
-            const rect = child.getBoundingClientRect();
-            const childCenter = rect.top + rect.height / 2;
-            const dist = Math.abs(centerY - childCenter);
-            if (dist < minDist) {
-                minDist = dist;
-                closestIdx = i;
-            }
-        }
-        if (closestIdx !== lastHighlightedIndex) {
-            lastHighlightedIndex = closestIdx;
-            currentLineIndex = closestIdx;
-            updateHighlight();
-        }
-    }
-
+    // Atualiza highlight visual
     function updateHighlight() {
         for (let i = 0; i < linesContainer.children.length; i++) {
             const child = linesContainer.children[i];
@@ -445,28 +412,46 @@
         }
     }
 
-    // rolagem automática (incremento controlado por velocidade)
+    // NOVA ROLAGEM: baseada em TEMPO por parágrafo!
     function startAutoScroll() {
-        if (scrollInterval) clearInterval(scrollInterval);
+        if (isScrolling) return;
+        
         isScrolling = true;
         scrollStateBadge.innerText = '▶️ Rodando';
         scrollStateBadge.style.background = '#2E7D32';
-        // delta por frame: ajuste baseado na velocidade (pixels por segundo) => 60fps suave
-        let lastTimestamp = performance.now();
+        lastTimestamp = performance.now();
+        timeAccumulator = 0;
+        
         function stepScrolling(now) {
             if (!isScrolling) return;
-            const delta = Math.min(0.05, (now - lastTimestamp) / 1000);
+            
+            const deltaSeconds = Math.min(0.05, (now - lastTimestamp) / 1000);
             lastTimestamp = now;
-            const pixelsToScroll = currentSpeed * delta * 40; // fator confortável para suavidade
-            if (pixelsToScroll > 0) {
-                teleContainer.scrollBy({ top: pixelsToScroll, behavior: 'auto' });
+            
+            if (currentLines.length > 0 && currentLineIndex < currentLines.length) {
+                // Acumula tempo
+                timeAccumulator += deltaSeconds;
+                
+                // Verifica se já passou o tempo do parágrafo atual
+                if (timeAccumulator >= secondsPerParagraph) {
+                    // Avança para o próximo parágrafo
+                    timeAccumulator = 0;
+                    
+                    if (currentLineIndex + 1 < currentLines.length) {
+                        currentLineIndex++;
+                        scrollToLine(currentLineIndex);
+                        updateHighlight();
+                    } else {
+                        // Chegou ao final
+                        stopAutoScroll();
+                        return;
+                    }
+                }
             }
-            // Atualiza linha baseada na posição central
-            updateHighlightFromScroll();
-            if (isScrolling) {
-                animationFrameId = requestAnimationFrame(stepScrolling);
-            }
+            
+            animationFrameId = requestAnimationFrame(stepScrolling);
         }
+        
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         animationFrameId = requestAnimationFrame(stepScrolling);
     }
@@ -479,48 +464,100 @@
         isScrolling = false;
         scrollStateBadge.innerText = '⏸️ Pausado';
         scrollStateBadge.style.background = '#2D3E50';
+        timeAccumulator = 0;
     }
 
-    // Aplicar texto e resetar rolagem
     function updateTeleprompter() {
         const raw = scriptInput.value;
         const lines = parseTextToLines(raw);
         currentLines = lines;
-        currentLineIndex = 0;
-        lastHighlightedIndex = -1;
+        
         const wasScrolling = isScrolling;
         if (wasScrolling) stopAutoScroll();
+        
         renderLines(currentLines);
+        
         if (wasScrolling) startAutoScroll();
-        else {
-            // sincroniza highlight
-            updateHighlightFromScroll();
-        }
     }
 
-    // evento para quando o scroll manual do usuário, atualizar highlight
+    // Evento de scroll manual
     function onManualScroll() {
-        if (!isScrolling) {
-            updateHighlightFromScroll();
+        if (!isScrolling && linesContainer.children.length) {
+            // Atualiza linha atual baseada no centro da tela
+            const containerRect = teleContainer.getBoundingClientRect();
+            const centerY = containerRect.top + containerRect.height / 2;
+            let closestIdx = 0;
+            let minDist = Infinity;
+            
+            for (let i = 0; i < linesContainer.children.length; i++) {
+                const rect = linesContainer.children[i].getBoundingClientRect();
+                const childCenter = rect.top + rect.height / 2;
+                const dist = Math.abs(centerY - childCenter);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestIdx = i;
+                }
+            }
+            
+            if (closestIdx !== currentLineIndex) {
+                currentLineIndex = closestIdx;
+                updateHighlight();
+            }
         }
     }
 
-    // Carregar texto de exemplo inicial
+    // Carregar exemplo com o texto da lição
     function loadExample() {
-        const example = `Bem-vindo ao Teleprompter profissional com gravação de áudio integrada!
+        const example = `A lição da noite de hoje, é a lição 134 Pão. Do livro Palavras de Vida Eterna do Emmanuel. Psicografia: Francisco Cândido Xavier.
 
-Este é o seu primeiro parágrafo. O sistema destaca automaticamente a linha que está no centro da tela.
+Lição 134 - PÃO 
+"Eu sou o pão da vida." – Jesus. (JOÃO, capítulo 6, versículo 48)
 
-Segundo bloco: Ideal para podcasts, vídeos e apresentações.
+Importante considerar a afirmativa de Jesus, comparando-se ao pão. Todos os povos, em todos os tempos, se ufanam dos pratos nacionais. As mesas festivas, em todas as épocas, banqueteiam-se com viandas exóticas.
 
-Grave sua narração enquanto o texto rola. Ao final, baixe em MP3.
+Condimentação excitante, misturas complicadas, confeitos extravagantes, grande cópia de animais sacrificados.
 
-Aproveite a experiência all-in-one.`;
+Às vezes, depois das iguarias tóxicas, as libações de entontecer.
+
+O pão, no entanto, é o alimento popular. Ainda mesmo quando varie nos ingredientes que o compõem e nos métodos de confecção em que se configura, é constituído de farinha amassada e vulgarmente fermentada e que, depois de submetida ao calor do forno, se transforma em fator do sustento mundial.
+
+Sempre o mesmo, na avenida ou na favela, na escola ou no hospital. Se lhe adicionam outra espécie de quitute, entre duas fatias, deixa de ser pão. É sanduíche. Se lançado à formação de acepipe que o absorva, naturalmente desaparece.
+
+O pão é invariavelmente pão.
+
+Quando alguém te envolva no confete da lisonja, insuflando-te vaidade, não te dês à superestimação dos próprios valores. Não te acredites em condições excepcionais e nem te situes acima dos outros.
+
+Abraça nos deveres diários o caminho da ascensão, recordando que Jesus – o Enviado Divino e Governador Espiritual da Terra – não achou para si mesmo outra imagem mais nobre e mais alta que a do pão puro e simples.
+
+Oração de São Francisco
+
+Senhor, fazei de mim um instrumento de vossa Paz. Onde houver Ódio, que eu leve o Amor. Onde houver Ofensa, que eu leve o Perdão. Onde houver Discórdia, que eu leve a União. Onde houver Dúvida, que eu leve a Fé. Onde houver Erro, que eu leve a Verdade. Onde houver Desespero, que eu leve a Esperança. Onde houver Tristeza, que eu leve a Alegria. Onde houver Trevas, que eu leve a Luz!
+
+Ó Mestre, fazei que eu procure mais: consolar, que ser consolado; compreender, que ser compreendido; amar, que ser amado. Pois é dando, que se recebe. Perdoando, que se é perdoado e é morrendo, que se vive para a vida eterna! Amém
+
+Analogia
+
+Bem de acordo com o texto, podemos fazer uma analogia bem simples: Pense numa Festa chique. Você vai numa festa cheia de comidas diferentes: doces sofisticados, pratos caros, bebidas elaboradas. Tudo bonito… mas às vezes pesado, exagerado e até enjoativo.
+
+Agora você chega em casa com fome… e encontra: pão quentinho, simples, sem exagero. E aí você percebe: é isso que realmente mata a fome.
+
+O que Jesus quis ensinar
+
+Jesus está dizendo: "Não tente ser algo cheio de enfeite, vaidade ou exagero… Seja como o pão: simples, útil e presente na vida das pessoas."
+
+No nosso dia a dia: Tem pessoa que gosta de aparecer, quer ser elogiada o tempo todo, se acha melhor que os outros. É como uma comida cheia de enfeite — bonita, mas não sustenta de verdade.
+
+E tem pessoa que: ajuda sem fazer alarde, faz o bem no dia a dia, é constante, humilde. É como o pão — pode não chamar atenção, mas faz diferença real.
+
+Conclusão
+
+Jesus se compara ao pão porque o pão é simples, essencial e está presente na vida de todos — ricos ou pobres. Ele não escolheu algo luxuoso, mas algo humilde e indispensável. Profundo, porém simples.`;
+        
         scriptInput.value = example;
         updateTeleprompter();
     }
 
-    // ---------- ÁUDIO: Gravação, Mixer, MP3 (lamejs) ----------
+    // ========== ÁUDIO (mantido igual, funcionando) ==========
     async function initAudioContext() {
         if (audioContext && audioContext.state !== 'closed') return audioContext;
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -582,15 +619,11 @@ Aproveite a experiência all-in-one.`;
                 if (event.data.size > 0) audioChunks.push(event.data);
             };
             mediaRecorder.onstop = async () => {
-                recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                // converter WebM -> WAV (decodificar) -> MP3 com lamejs
+                const recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 await convertWebMToMP3(recordedBlob);
                 downloadMp3Btn.disabled = false;
                 recordStatusSpan.innerHTML = '<span class="recording-led"></span> Pronto para baixar';
-                if (analyserNode) {
-                    cancelAnimationFrame(animationId);
-                    animationId = null;
-                }
+                if (analyserNode) cancelAnimationFrame(animationId);
                 ctxClearWave();
             };
             mediaRecorder.start(250);
@@ -602,7 +635,7 @@ Aproveite a experiência all-in-one.`;
             drawWaveform();
         } catch (err) {
             console.error(err);
-            alert("Permissão de microfone necessária para gravar. Verifique as configurações do navegador/celular.");
+            alert("Permissão de microfone necessária. Verifique as configurações.");
             recordBtn.disabled = false;
         }
     }
@@ -631,26 +664,22 @@ Aproveite a experiência all-in-one.`;
         }
     }
 
-    // Converter WebM -> MP3 (via lamejs usando decode e PCM)
     async function convertWebMToMP3(webmBlob) {
         return new Promise((resolve, reject) => {
             const fileReader = new FileReader();
             fileReader.onload = async function(ev) {
                 const arrayBuffer = ev.target.result;
-                // decodificar áudio webm para AudioBuffer
                 const audioCtxOff = new OfflineAudioContext({ numberOfChannels: 1, length: 2, sampleRate: 44100 });
                 try {
                     const audioBuffer = await audioCtxOff.decodeAudioData(arrayBuffer);
-                    const pcmData = audioBuffer.getChannelData(0); // Float32
+                    const pcmData = audioBuffer.getChannelData(0);
                     const sampleRate = audioBuffer.sampleRate;
-                    // converter para 16-bit PCM inteiro
                     const pcmInt16 = new Int16Array(pcmData.length);
                     for (let i = 0; i < pcmData.length; i++) {
                         let s = Math.max(-1, Math.min(1, pcmData[i]));
                         pcmInt16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
                     }
-                    // usar lamejs para MP3
-                    const mp3encoder = new lamejs.Mp3Encoder(1, sampleRate, 128); // mono, 128kbps
+                    const mp3encoder = new lamejs.Mp3Encoder(1, sampleRate, 128);
                     const sampleBlockSize = 1152;
                     const mp3Data = [];
                     for (let i = 0; i < pcmInt16.length; i += sampleBlockSize) {
@@ -660,13 +689,12 @@ Aproveite a experiência all-in-one.`;
                     }
                     const final = mp3encoder.flush();
                     if (final.length) mp3Data.push(final);
-                    const mp3Blob = new Blob(mp3Data, { type: 'audio/mp3' });
-                    mp3BlobReady = mp3Blob;
+                    mp3BlobReady = new Blob(mp3Data, { type: 'audio/mp3' });
                     recordStatusSpan.innerHTML = '✅ MP3 pronto! Clique em baixar';
                     resolve();
                 } catch (e) {
                     console.error(e);
-                    recordStatusSpan.innerHTML = '❌ Falha na conversão MP3';
+                    recordStatusSpan.innerHTML = '❌ Falha na conversão';
                     reject(e);
                 }
             };
@@ -685,37 +713,31 @@ Aproveite a experiência all-in-one.`;
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         } else {
-            alert("Nenhum áudio gravado ou ainda processando. Grave novamente.");
+            alert("Nenhum áudio gravado. Grave novamente.");
         }
     }
 
-    // Event listeners
+    // Event Listeners
     updateBtn.addEventListener('click', updateTeleprompter);
-    startScrollBtn.addEventListener('click', () => {
-        if (!isScrolling) startAutoScroll();
+    startScrollBtn.addEventListener('click', () => { 
+        if (!isScrolling) startAutoScroll(); 
     });
-    pauseScrollBtn.addEventListener('click', () => {
-        if (isScrolling) stopAutoScroll();
+    pauseScrollBtn.addEventListener('click', () => { 
+        if (isScrolling) stopAutoScroll(); 
     });
     speedSlider.addEventListener('input', (e) => {
-        currentSpeed = parseFloat(e.target.value);
-        speedVal.innerText = currentSpeed.toFixed(1);
+        secondsPerParagraph = parseFloat(e.target.value);
+        speedVal.innerText = secondsPerParagraph.toFixed(1) + ' seg';
     });
     teleContainer.addEventListener('scroll', onManualScroll);
-
     recordBtn.addEventListener('click', startRecording);
     stopRecordBtn.addEventListener('click', stopRecording);
     downloadMp3Btn.addEventListener('click', downloadMp3);
 
     // Inicialização
     loadExample();
-    // Ajusta velocidade inicial
-    currentSpeed = parseFloat(speedSlider.value);
-    speedVal.innerText = currentSpeed.toFixed(1);
-    // Previne scroll inesperado
-    window.addEventListener('load', () => {
-        updateHighlightFromScroll();
-    });
+    secondsPerParagraph = parseFloat(speedSlider.value);
+    speedVal.innerText = secondsPerParagraph.toFixed(1) + ' seg';
 </script>
 </body>
 </html>
