@@ -2,7 +2,7 @@
 
 Uma aplicação web all-in-one que combina um teleprompter profissional com sistema de gravação de áudio, ideal para criadores de conteúdo, YouTubers, podcasters e profissionais de apresentação.
 
-![Demonstração](https://via.placeholder.com/800x400?text=Teleprompt+Preview)
+![Acesse:](https://luizfbarbosa.github.io/teleprompt/)
 
 ## ✨ Funcionalidades
 
